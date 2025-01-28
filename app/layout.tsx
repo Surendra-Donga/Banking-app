@@ -14,8 +14,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Horizon",
-  description: "Horizon is a modern banking app for everyone",
+  title: "Marut",
+  description: "Marut is a modern banking app for everyone",
   icons:{
     icon:'/icons/logo.svg'
   }
