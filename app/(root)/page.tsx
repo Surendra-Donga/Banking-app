@@ -1,62 +1,57 @@
-"use client";
+import HeaderBox from '@/components/HeaderBox'
+import RecentTransactions from '@/components/RecentTransactions';
+import RightSidebar from '@/components/RightSidebar';
+import TotalBalanceBox from '@/components/TotalBalanceBox';
+import { getAccount, getAccounts } from '@/lib/actions/bank.actions';
+import { getLoggedInUser } from '@/lib/actions/user.actions';
 
-import { useEffect, useState } from "react";
-import HeaderBox from "@/components/HeaderBox";
-import RightSidebar from "@/components/RightSidebar";
-import TotalBalanceBox from "@/components/ui/TotalBalanceBox";
-import { getLoggedInUser } from "@/lib/actions/user.actions";
+const Home = async ({ searchParams: { id, page } }: SearchParamProps) => {
+  const currentPage = Number(page as string) || 1;
+  const loggedIn = await getLoggedInUser();
+  const accounts = await getAccounts({ 
+    userId: loggedIn.$id 
+  })
 
-const Home = () => {
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  if(!accounts) return;
+  
+  const accountsData = accounts?.data;
+  const appwriteItemId = (id as string) || accountsData[0]?.appwriteItemId;
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const loggedIn = await getLoggedInUser();
-        setUser(loggedIn);
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  const account = await getAccount({ appwriteItemId })
 
   return (
     <section className="home">
       <div className="home-content">
         <header className="home-header">
-          <HeaderBox
+          <HeaderBox 
             type="greeting"
             title="Welcome"
-            user={user?.name || "Guest"}
-            subtext="Access and manage your account transactions efficiently."
+            user={loggedIn?.firstName || 'Guest'}
+            subtext="Access and manage your account and transactions efficiently."
           />
-          <TotalBalanceBox
-            accounts={[]}
-            totalBanks={1}
-            totalCurrentBalance={1250.25}
+
+          <TotalBalanceBox 
+            accounts={accountsData}
+            totalBanks={accounts?.totalBanks}
+            totalCurrentBalance={accounts?.totalCurrentBalance}
           />
         </header>
-        RECENT TRANSACTIONS
+
+        <RecentTransactions 
+          accounts={accountsData}
+          transactions={account?.transactions}
+          appwriteItemId={appwriteItemId}
+          page={currentPage}
+        />
       </div>
-      <RightSidebar
-        user={user} // Pass null or an object if user is undefined
-        transactions={[]}
-        banks={[
-          { currentBalance: 123.5 },
-          { currentBalance: 250.5 },
-        ]}
+
+      <RightSidebar 
+        user={loggedIn}
+        transactions={account?.transactions}
+        banks={accountsData?.slice(0, 2)}
       />
     </section>
-  );
-};
+  )
+}
 
-export default Home;
+export default Home
